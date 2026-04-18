@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+  margin:0;
+  background:#000;
+  font-family:sans-serif;
+  display:flex;
+  justify-content:center;
+}
+
+.app {
+  width:100%;
+  max-width:400px;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* DISPLAY */
+.display {
+  flex:1;
+  color:white;
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-end;
+  padding:20px;
+  overflow:hidden;
+}
+
+#displayText {
+  font-size:48px;
+  word-break:break-all;
+}
+
+/* BUTTONS */
+.buttons {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+button {
+  padding:18px;
+  border:none;
+  border-radius:50%;
+  font-size:20px;
+  background:#2a2a2a;
+  color:white;
+}
+
+button:active { transform:scale(0.95); }
+
+.orange { background:#f59e0b; }
+.gray { background:#555; }
+
+/* TABS */
+.tabs {
+  display:flex;
+  justify-content:space-around;
+  background:#111;
+}
+
+.tab {
+  color:white;
+  padding:12px;
+  cursor:pointer;
+}
+
+.active { border-bottom:2px solid orange; }
+
+/* SECTIONS */
+.section { display:none; flex:1; }
+.activeSection { display:flex; flex-direction:column; }
+
+/* INPUT */
+input, select {
+  width:90%;
+  margin:10px auto;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('calc', this)">Calculator</div>
+  <div class="tab" onclick="switchTab('conv', this)">Converter</div>
+  <div class="tab" onclick="switchTab('perc', this)">Percentage</div>
+</div>
+
+<!-- CALC -->
+<div id="calc" class="section activeSection">
+<div class="display">
+  <div id="displayText">0</div>
+</div>
+
+<div class="buttons">
+<button class="gray" onclick="clearDisplay()">AC</button>
+<button class="gray" onclick="plusMinus()">±</button>
+<button class="gray" onclick="percent()">%</button>
+<button class="orange" onclick="operator('/')">÷</button>
+
+<button onclick="number('7')">7</button>
+<button onclick="number('8')">8</button>
+<button onclick="number('9')">9</button>
+<button class="orange" onclick="operator('*')">×</button>
+
+<button onclick="number('4')">4</button>
+<button onclick="number('5')">5</button>
+<button onclick="number('6')">6</button>
+<button class="orange" onclick="operator('-')">−</button>
+
+<button onclick="number('1')">1</button>
+<button onclick="number('2')">2</button>
+<button onclick="number('3')">3</button>
+<button class="orange" onclick="operator('+')">+</button>
+
+<button onclick="number('0')" style="grid-column: span 2; border-radius:40px;">0</button>
+<button onclick="decimal()">.</button>
+<button class="orange" onclick="calculate()">=</button>
+</div>
+</div>
+
+<!-- CONVERTER -->
+<div id="conv" class="section">
+<h2 style="color:white;text-align:center;">Unit Converter</h2>
+
+<input id="val" placeholder="Enter value">
+
+<select id="from">
+<option value="kg">kg</option>
+<option value="g">g</option>
+<option value="kb">KB</option>
+<option value="mb">MB</option>
+<option value="gb">GB</option>
+</select>
+
+<select id="to">
+<option value="g">g</option>
+<option value="kg">kg</option>
+<option value="kb">KB</option>
+<option value="mb">MB</option>
+<option value="gb">GB</option>
+</select>
+
+<button onclick="convert()">Convert</button>
+<h2 id="result" style="color:white;text-align:center;"></h2>
+</div>
+
+<!-- PERCENT -->
+<div id="perc" class="section">
+<h2 style="color:white;text-align:center;">Percentage Calculator</h2>
+
+<input id="got" placeholder="Marks obtained">
+<input id="total" placeholder="Total marks">
+
+<button onclick="calcPercent()">Calculate %</button>
+<h2 id="percentResult" style="color:white;text-align:center;"></h2>
+</div>
+
+</div>
+
+<script>
+// SW
+if ('serviceWorker' in navigator') {
+  navigator.serviceWorker.register('sw.js');
+}
+
+// TAB
+function switchTab(tab, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('activeSection'));
+  document.getElementById(tab).classList.add('activeSection');
+}
+
+// CALC ENGINE
+let display=document.getElementById("displayText");
+let current="";
+
+function update(){
+  display.innerText=current||"0";
+}
+
+function number(n){
+  current+=n;
+  update();
+}
+
+function operator(op){
+  if(current==="") return;
+  let last=current.slice(-1);
+  if(['+','-','*','/'].includes(last)){
+    current=current.slice(0,-1)+op;
+  } else {
+    current+=op;
+  }
+  update();
+}
+
+function decimal(){
+  let parts=current.split(/[\+\-\*\/]/);
+  let last=parts[parts.length-1];
+  if(!last.includes(".")){
+    current+=".";
+    update();
+  }
+}
+
+function clearDisplay(){
+  current="";
+  update();
+}
+
+function plusMinus(){
+  if(!current) return;
+  current=(parseFloat(current)*-1).toString();
+  update();
+}
+
+function percent(){
+  if(!current) return;
+  current=(parseFloat(current)/100).toString();
+  update();
+}
+
+function calculate(){
+  try{
+    current=Function('"use strict";return('+current+')')().toString();
+  }catch{
+    current="";
+    display.innerText="Error";
+  }
+  update();
+}
+
+// CONVERTER
+function convert(){
+  let v=parseFloat(val.value);
+  if(isNaN(v)) return;
+
+  let f=from.value;
+  let t=to.value;
+  let r=v;
+
+  if(f=="kg"&&t=="g") r=v*1000;
+  else if(f=="g"&&t=="kg") r=v/1000;
+
+  else if(f=="kb"&&t=="mb") r=v/1024;
+  else if(f=="mb"&&t=="kb") r=v*1024;
+  else if(f=="mb"&&t=="gb") r=v/1024;
+  else if(f=="gb"&&t=="mb") r=v*1024;
+
+  result.innerText=r;
+}
+
+// PERCENT
+function calcPercent(){
+  let g=parseFloat(got.value);
+  let t=parseFloat(total.value);
+
+  if(isNaN(g)||isNaN(t)||t===0){
+    percentResult.innerText="Invalid";
+    return;
+  }
+
+  let p=(g/t)*100;
+  percentResult.innerText=p.toFixed(2)+" %";
+}
+</script>
+
+</body>
+</html>
