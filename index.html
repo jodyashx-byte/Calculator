@@ -1,0 +1,108 @@
+<!DOCT
+
+<option value="mb">MB</option>
+<option value="gb">GB</option>
+</select>
+
+<button onclick="convert()">Convert</button>
+<h2 id="result" style="color:white;text-align:center;"></h2>
+</div>
+
+<!-- PERCENT TAB -->
+<div id="perc" class="section">
+<h2 style="color:white;text-align:center;">Percentage Calculator</h2>
+
+<input id="got" placeholder="Marks obtained (Ex.Mark Obtained = 400)">
+<input id="total" placeholder="Total marks (Ex.Out of 500)">
+
+<button onclick="calcPercent()">Calculate %</button>
+
+<h2 id="percentResult" style="color:white;text-align:center;"></h2>
+</div>
+
+</div>
+
+<script>
+// SW
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+// TAB SWITCH
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('activeSection'));
+  document.getElementById(tab).classList.add('activeSection');
+}
+
+// CALCULATOR
+let display=document.getElementById("displayText");
+let current="";
+
+function num(n){ current+=n; update(); }
+
+function op(o){
+  let last=current.slice(-1);
+  if(['+','-','*','/'].includes(last)){
+    current=current.slice(0,-1)+o;
+  } else current+=o;
+  update();
+}
+
+function update(){ display.innerText=current||"0"; }
+
+function clearDisplay(){ current=""; update(); }
+
+function plusMinus(){
+  current=(parseFloat(current)*-1).toString();
+  update();
+}
+
+function percent(){
+  current=(parseFloat(current)/100).toString();
+  update();
+}
+
+function calc(){
+  try{
+    current=Function('"use strict";return('+current+')')().toString();
+  }catch{
+    current=""; display.innerText="Error";
+  }
+  update();
+}
+
+// CONVERTER
+function convert(){
+  let v=parseFloat(val.value);
+  let f=from.value;
+  let t=to.value;
+  let r=v;
+
+  if(f=="kg"&&t=="g") r=v*1000;
+  else if(f=="g"&&t=="kg") r=v/1000;
+
+  else if(f=="kb"&&t=="mb") r=v/1024;
+  else if(f=="mb"&&t=="kb") r=v*1024;
+  else if(f=="mb"&&t=="gb") r=v/1024;
+  else if(f=="gb"&&t=="mb") r=v*1024;
+
+  result.innerText=r;
+}
+
+// PERCENT
+function calcPercent(){
+  let g=parseFloat(got.value);
+  let t=parseFloat(total.value);
+
+  if(!g||!t){ percentResult.innerText="Enter values"; return; }
+
+  let p=(g/t)*100;
+  percentResult.innerText=p.toFixed(2)+" %";
+}
+</script>
+
+</body>
+</html>
